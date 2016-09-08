@@ -72,6 +72,36 @@ class ContainerManager extends ContainerResource
     }
 
     /**
+     * @param $id
+     * @param array $parameters
+     * @param string $fetch
+     * @return DockerRawStream|\Psr\Http\Message\ResponseInterface|string
+     */
+    public function log($id, $parameters = [], $fetch = self::FETCH_OBJECT)
+    {
+        if (!isset($parameters['stdout'])) {
+            $parameters['stdout'] = true;
+        }
+        if (!isset($parameters['stderr'])) {
+            $parameters['stderr'] = true;
+        }
+
+        $response = parent::logs($id, $parameters, $fetch);
+
+        if ($response->getStatusCode() == 200) {
+            if ($fetch == self::FETCH_STREAM) {
+                return new DockerRawStream($response->getBody());
+            }
+
+            if ($fetch == self::FETCH_OBJECT) {
+                return $response->getBody()->getContents();
+            }
+        }
+
+        return $response;
+    }
+
+    /**
      * @inheritDoc
      *
      * @return \Psr\Http\Message\ResponseInterface|DockerRawStream|string[][]
